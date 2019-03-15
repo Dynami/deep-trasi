@@ -222,6 +222,7 @@ def main(conn, look_fwd=10, threshold=0.05, option_step=250.0):
 
     return df
 
+
 if __name__ == '__main__':
     conn = sqlite3.connect('../data/trasi.db')
     main(conn)
