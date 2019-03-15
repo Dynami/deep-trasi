@@ -1,3 +1,5 @@
 .idea/
 data/trasi.db
 trasi.csv
+/.project
+/.pydevproject
