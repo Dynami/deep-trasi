@@ -199,12 +199,12 @@ def get_futures(conn, df_index_filter):
     return pd.DataFrame(index=df_index_filter.index, data=future_data, columns=future_labels)
 
 
-def main(conn, look_fwd=10, threshold=0.05, option_step=250.0):
+def main(conn, look_fwd=10, threshold=0.025, option_step=250.0):
     # GET PRINCES
     df_prices_norm, df_target_norm, df_index = get_prices(conn, look_fwd=look_fwd, threshold=threshold)
 
     # GET OPTIONS
-    df_option_data = get_options(conn, df_index)
+    df_option_data = get_options(conn, df_index, option_step=option_step)
 
     # GET FUTURES
     df_futures = get_futures(conn, df_index)
@@ -219,3 +219,4 @@ def main(conn, look_fwd=10, threshold=0.05, option_step=250.0):
 if __name__ == '__main__':
     conn = sqlite3.connect('../data/trasi.db')
     main(conn)
+
