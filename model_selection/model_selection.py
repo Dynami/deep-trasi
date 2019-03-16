@@ -40,19 +40,22 @@ def main(df, split_ratio=0.80, models=(LogisticRegression)):
     class_weight = get_class_weight(y_train_data)
 
     print(class_weight)
-    best_parameters = {'C': 0.1, 'penalty': 'l1', 'solver': 'liblinear'}
 
     if (False):
-        parameters = {'solver': ('liblinear', 'saga'), 'penalty': ['l1'], 'C': [0.1, 1, 10]}
+        parameters = {[{'solver': ('liblinear', 'saga'), 'penalty': ['l1', 'l2'], 'C': [0.1, 1, 10]},
+                      {'solver': ('newton-cg', 'lbfgs', 'sag'), 'penalty': ['l2'], 'C': [0.1, 1, 10]}]}
         model = LogisticRegression(class_weight=class_weight, random_state=True)
         clf = GridSearchCV(model, parameters, cv=4)
-        clf.fit(x_train_data.values, y_train_data[['y_data_sparse']].values)
+        clf.fit(x_train_data.values, y_train_data[['sparse_target']].values)
 
         print(clf.best_params_)
         model = clf.best_estimator_
+    else:
+        best_parameters = {'C': 0.1, 'penalty': 'l1', 'solver': 'liblinear'}
+        #best_parameters = {'C': 0.1, 'penalty': 'l2', 'solver': 'saga'}
+        model = LogisticRegression(class_weight=class_weight, random_state=True, **best_parameters)
+        model.fit(x_train_data.values, y_train_data[['sparse_target']].values)
 
-    model = LogisticRegression(**best_parameters)
-    model.fit(x_train_data.values, y_train_data[['sparse_target']].values)
     y_pred = model.predict(x_test_data)
 
     y_pred_proba = model.predict_proba(x_test_data)
@@ -64,12 +67,31 @@ def main(df, split_ratio=0.80, models=(LogisticRegression)):
     y_test_data_return = y_test_data[['target']].values
     y_test_data_return = np.reshape(y_test_data_return, (-1))
 
-    print(y_pred.shape, y_test_data_sparse.shape, y_pred_proba.shape, y_test_data_return.shape)
+    #print(y_pred.shape, y_test_data_sparse.shape, y_pred_proba.shape, y_test_data_return.shape)
     result = y_pred * y_test_data_sparse * y_pred_proba * y_test_data_return
-    print('>>>>>', np.sum(result), '#####', result)
+    # non zero measurament
+    nz = result[np.where(result !=0)]
+    nz_coverage = (float(len(nz))/len(result))
+    nz_mean = np.mean(nz)
+    nz_std = np.std(nz)
+    sharpe_ratio = nz_mean/nz_std
+    # Precision score
+    print(len(np.where(nz > 0)), len(nz))
+    nz_prec = np.sum(np.where(nz > 0, 1, 0)) / float(len(nz))
+
+    print('Total >>>>>', np.sum(result))
+    print('Prec. >>>>> %.3f%%' % (nz_prec*100))
+    print('Cover.>>>>> %.3f%%' % (nz_coverage*100))
+    print('Sharp >>>>> %.3f' % sharpe_ratio)
+    print('Mean  >>>>> %.3f' % nz_mean)
+    print('Std   >>>>> %.3f' % nz_std)
+    print('Detail>>>>>', result)
     pass
 
 
 if __name__ == '__main__':
     df = pd.read_csv('../trasi.csv', index_col='index')
+    models = [
+
+    ]
     main(df)
