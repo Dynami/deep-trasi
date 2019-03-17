@@ -32,6 +32,9 @@ def evaluate(clf, x_train, y_train, class_weight=None, cv=5, scoring='accuracy')
     else:
         model = clf['clf']()
     print(type(model))
+    #np.random.seed(2888306641) # Best seed found
+    seed = np.random.get_state()[1][0]
+    print('np.random.seed', seed)
     clf = GridSearchCV(model, clf['parameters'], cv=cv, scoring=scoring)
     clf.fit(x_train, y_train)
 
@@ -94,7 +97,7 @@ def main(df, split_ratio=0.80, models=None):
     clfs = []
 
     for i, clf in enumerate(models):
-        _class_weight = class_weight if clf['use_class_weight']  else None
+        _class_weight = class_weight if clf['use_class_weight'] else None
         _clf = evaluate(clf, x_train=x_train_data.values, y_train=y_train_data[['sparse_target']].values, class_weight=_class_weight)
 
         _result = scoring( _clf['model'], x_test_data, y_test_data)
@@ -207,9 +210,24 @@ if __name__ == '__main__':
         #     }
         #},
         {
-            'clf':MLPClassifier,
+            # Total  >>>>> 70.821 %
+            # Prec.  >>>>> 64.557 %
+            # Cover. >>>>> 64.228 %
+            # Sharp  >>>>> 0.314
+            # Mean   >>>>> 0.009
+            # Std    >>>>> 0.029
+            'clf': MLPClassifier,
             'use_class_weight': False,
-            'parameters': {}
+            'parameters': {
+                'shuffle': [True],
+                'hidden_layer_sizes':[(300, 100, 200)],
+                'activation': ['relu'],
+                #'nesterovs_momentum': [True, False],
+                'solver': ['adam'],
+                'alpha':[0.0001],
+                'learning_rate': [ 'invscaling'],# 'constant', 'adaptive',
+                #'early_stopping':[True],
+            }
         }
     ]
 
