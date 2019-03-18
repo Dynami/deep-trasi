@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore")
 
 
 def split_dataset(df, split_ratio):
-    # df= df[::-1]
+    # df = df[::-1]
     n_train = int(df.shape[0] * split_ratio)
 
     x_train_data = df.iloc[:n_train, :-2]
@@ -36,7 +36,7 @@ def evaluate(clf, x_train, y_train, class_weight=None, cv=5, scoring='accuracy')
         model = clf['clf']()
 
     print(type(model))
-    np.random.seed(2888306641)  # Best seed found
+    #np.random.seed(2888306641)  # Best seed found
     seed = np.random.get_state()[1][0]
     print('np.random.seed', seed)
     clf = GridSearchCV(model, clf['parameters'], cv=cv)
@@ -227,7 +227,7 @@ if __name__ == '__main__':
         #     'use_class_weight': False,
         #     'parameters': {
         #         'shuffle': [True],
-        #         'hidden_layer_sizes':[(300, 100, 200)],
+        #         'hidden_layer_sizes':[(200)],
         #         'activation': ['relu'],
         #         #'nesterovs_momentum': [True, False],
         #         'solver': ['adam'],
@@ -246,8 +246,9 @@ if __name__ == '__main__':
             'clf': Lasso,
             'use_class_weight': False,
             'parameters': {
-                'alpha': [1.8], #np.arange(1.0, 2.2, 0.2),
-                'selection': ['cyclic']
+                'alpha': [1.0], # np.arange(1.6, 2.2, 0.2),
+                'selection': ['cyclic'],
+                'random_state':[True]
             }
         },
         # {
