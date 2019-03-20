@@ -116,11 +116,12 @@ def get_prices(conn, look_fwd, threshold):
 
     df_index_norm = df_index[['open', 'high', 'low', 'close']].pct_change(look_fwd)
 
-    df_index_norm = pd.DataFrame(index=df_index.index[look_fwd:],
-                                 data=df_index_norm,
-                                 columns=['open', 'high', 'low', 'close'])
+    # df_index_norm = pd.DataFrame(index=df_index.index[look_fwd:],
+    #                              data=df_index_norm,
+    #                              columns=['open_{}'.format(look_fwd), 'high_{}'.format(look_fwd), 'low_{}'.format(look_fwd), 'close_{}'.format(look_fwd)])
 
     df_index_norm['target'] = df_index_norm['close'].shift(-look_fwd)
+    df_index_norm['close_1'] = df_index['close'].pct_change(1)
     df_index_norm.dropna(axis=0, inplace=True)
 
     df_index_norm['dayofweek'] = df_index_norm.index.dayofweek + 1
@@ -135,15 +136,15 @@ def get_prices(conn, look_fwd, threshold):
     df_index_norm.drop(columns=['target', 'sparse_target'], axis=1, inplace=True)
 
     df_index_norm = pd.concat([
-        df_index_norm[['open', 'high', 'low', 'close']],
+        df_index_norm[['open', 'high', 'low', 'close', 'close_1']],
         pd.get_dummies(df_index_norm['dayofweek']),
         pd.get_dummies(df_index_norm['week']),
         pd.get_dummies(df_index_norm['month'])
     ], axis=1)
 
-    df_index_norm.columns.values[4:9] = ['mon', 'tue', 'wed', 'thu', 'fri']
-    df_index_norm.columns.values[9:14] = ['week_1', 'week_2', 'week_3', 'week_4', 'week_5']
-    df_index_norm.columns.values[14:26] = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+    df_index_norm.columns.values[5:10] = ['mon', 'tue', 'wed', 'thu', 'fri']
+    df_index_norm.columns.values[10:15] = ['week_1', 'week_2', 'week_3', 'week_4', 'week_5']
+    df_index_norm.columns.values[15:27] = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
     
     return df_index_norm, df_target_norm, df_index.loc[df_index_norm.index]
 

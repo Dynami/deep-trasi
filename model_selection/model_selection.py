@@ -1,11 +1,14 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import make_scorer
 
 import warnings
 
 warnings.filterwarnings("ignore")
 
+def custom_scorer(y_true, y_pred):
+    return np.sum(y_pred * y_true)
 
 def split_dataset(df, split_ratio):
     # df = df[::-1]
@@ -35,11 +38,13 @@ def evaluate(clf, x_train, y_train, class_weight=None, cv=5, scoring='accuracy')
     else:
         model = clf['clf']()
 
+    score_fn = make_scorer(custom_scorer)
+
     print(type(model))
-    #np.random.seed(2888306641)  # Best seed found
+    np.random.seed(2888306641)  # Best seed found
     seed = np.random.get_state()[1][0]
     print('np.random.seed', seed)
-    clf = GridSearchCV(model, clf['parameters'], cv=cv)
+    clf = GridSearchCV(model, clf['parameters'], cv=cv, scoring=score_fn)
     clf.fit(x_train, y_train)
 
     print(clf.best_params_)
@@ -48,47 +53,6 @@ def evaluate(clf, x_train, y_train, class_weight=None, cv=5, scoring='accuracy')
         'model':clf.best_estimator_,
         'best_params': clf.best_params_,
         'best_score': clf.best_score_
-    }
-
-def scoring(model, x_test, y_test):
-    y_pred = model.predict(x_test)
-
-    #y_pred_proba = model.predict_proba(x_test)
-    #y_pred_proba = [y_pred_proba[i, v] for i, v in enumerate(np.argmax(y_pred_proba, axis=1))]
-    #y_pred_proba = np.array(y_pred_proba)
-
-    y_test_data_sparse = y_test[['sparse_target']].values
-    y_test_data_sparse = np.reshape(y_test_data_sparse, (-1))
-    y_test_data_return = y_test[['target']].values
-    y_test_data_return = np.reshape(y_test_data_return, (-1))
-
-    # print(y_pred.shape, y_test_data_sparse.shape, y_pred_proba.shape, y_test_data_return.shape)
-    result = y_pred * y_test_data_return
-    # non zero measurament
-    nz = result[np.where(result != 0)]
-    nz_coverage = (float(len(nz)) / len(result))
-    nz_mean = np.mean(nz)
-    nz_std = np.std(nz)
-    sharpe_ratio = nz_mean / nz_std
-    # Precision score
-    nz_prec = np.sum(np.where(nz > 0, 1, 0)) / float(len(nz))
-
-    print('Detail>>>>>', result)
-    print('Total >>>>> %.3f%%' % (np.sum(result) * 100))
-    print('Prec. >>>>> %.3f%%' % (nz_prec * 100))
-    print('Cover.>>>>> %.3f%%' % (nz_coverage * 100))
-    print('Sharp >>>>> %.3f' % sharpe_ratio)
-    print('Mean  >>>>> %.3f' % nz_mean)
-    print('Std   >>>>> %.3f' % nz_std)
-    print('Samples>>>> %s' % x_test.shape[0])
-
-    return {
-        'total_return': np.sum(result),
-        'precision': nz_prec,
-        'coverage': nz_coverage,
-        'sharpe_ratio': sharpe_ratio,
-        'mean': nz_mean,
-        'std': nz_std
     }
 
 
@@ -104,13 +68,17 @@ def main(df, split_ratio=0.80, models=None):
         _class_weight = class_weight if clf['use_class_weight'] else None
         _clf = evaluate(clf, x_train=x_train_data.values, y_train=y_train_data[['sparse_target']].values, class_weight=_class_weight)
 
-        _result = scoring(_clf['model'], x_test_data.values, y_test_data)
-        _clf['results'] = _result
+        #_result = scoring(_clf['model'], x_test_data.values, y_test_data)
+        #_clf['results'] = _result
         clfs.append(_clf)
         print('-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-')
 
-    print(clfs)
-    pass
+    #print(clfs)
+
+    clfs = sorted(clfs, key= lambda x: x['best_score'])
+    print('-----------------------------------------------')
+    print(clfs[-1])
+    return clfs[-1]
 
 
 if __name__ == '__main__':

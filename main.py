@@ -1,13 +1,18 @@
 import sqlite3
 import preprocess.preprocess as prep
 import model_selection.model_selection as ms
-
+import process.execution as exec
 from sklearn.linear_model import Lasso
+import pandas as pd
 
-def main():
+def main(load_computed_data=True, look_fwd=10):
     conn = sqlite3.connect('./data/trasi.db')
 
-    df = prep.main(conn, look_fwd=10, threshold=0.000, option_step=500.0)
+    if load_computed_data:
+        df = pd.read_csv('./trasi.csv', index_col='index')
+        df.drop(columns='Unnamed: 0', inplace=True)
+    else:
+        df = prep.main(conn, look_fwd=look_fwd, threshold=0.000, option_step=500.0)
 
     models =[
         {
@@ -26,8 +31,10 @@ def main():
             }
         }
     ]
-    ms.main(df, models=models)
+    model = ms.main(df, models=models)
 
+    x_train, x_test, y_train, y_test = ms.split_dataset(df, split_ratio=0.8)
+    exec.main(model, x_test=x_test, y_test=y_test, look_fwd=look_fwd)
 
 if __name__ == '__main__':
-    main()
+    main(load_computed_data=True)
