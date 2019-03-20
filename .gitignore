@@ -3,3 +3,4 @@ data/trasi.db
 trasi.csv
 /.project
 /.pydevproject
+.ipynb_checkpoints/
